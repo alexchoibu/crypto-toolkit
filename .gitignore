@@ -1,1 +1,28 @@
-__pycache__
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large generated/downloaded data files — see README to regenerate
+data/dataset.csv
+data/hash_dataset.csv
+
+# Jupyter
+.ipynb_checkpoints/
