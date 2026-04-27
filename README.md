@@ -20,10 +20,18 @@ crypto-toolkit-main/
 │   └── 1-1000.txt                   ← Top 1000 common words (weighted higher)
 │
 ├── data/
-│   ├── cipher_dataset.csv           ← Generated dataset (10k Caesar + XOR samples)
-│   ├── dataset.csv                  ← Complex algorithm dataset (AES, RSA, etc.)
-│   ├── evaluation_results.csv       ← Output: row-by-row results from evaluation.py
-│   └── evaluation_chart.png         ← Output: visual comparison chart
+|   |── 0_9999_hashes.csv                   ← Generated umber list hash data
+|   |── 4-digits-0000-9999.txt              ← Number list containing strings 0000 to 9999
+│   |── cipher_dataset.csv                  ← Generated dataset (10k Caesar + XOR samples)
+|   |── create_data.py                      ← Dataset generation/accumulation script
+|   |── cryptography_dataset_enhanced.csv   ← First complex algorithm dataset from Kaggle
+|   |── cryptography_dataset_processed.csv  ← Second complex algorithm dataset from Kaggle
+|   |── data.csv                            ← Organized encoded dataset
+|   |── data.jsonl                          ← Encoded artifacts dataset from Hugging Face
+│   |── dataset.csv                         ← Complex algorithm dataset (AES, RSA, etc.)
+|   |── hashgen.py                          ← Hash generation script from SecLists
+│   ├── evaluation_results.csv              ← Output: row-by-row results from evaluation.py
+│   └── evaluation_chart.png                ← Output: visual comparison chart
 │
 └── llm/
     ├── __init__.py
