@@ -46,113 +46,16 @@ crypto-toolkit-main/
     └── test_llm_complex.py          ← Test script for llm_complex
 ```
 
+---
+
 ## Team
 
 | Name | Role |
 |------|------|
-| Alex | Data pipeline — dataset download, cleaning, hash dataset generation |
-| Nare | Baseline artifact identifier — encoding and hash detection |
-| Selman | Baseline cryptanalysis — Caesar and single-byte XOR decryption |
-| Princessa | LLM integration — local Llama model, prompt engineering |
-| Emily | Evaluation & comparison — benchmarking framework, results |
+| Alex | Data pipeline - dataset download, cleaning, hash dataset generation |
+| Nare | Baseline artifact identifier - encoding and hash detection |
+| Selman | Baseline cryptanalysis - Caesar and single-byte XOR decryption |
+| Princessa | LLM integration - local Llama model, prompt engineering |
+| Emily | Evaluation & comparison - benchmarking framework, results |
 
 ---
-
-## Datasets
-
-### 1. Cipher Dataset — `data/cipher_dataset.csv`
-Generated in-repo from `base_decryption/sentences.txt` (SecLists).
-Contains ~10,000 rows of Caesar and single-byte XOR ciphertexts with ground-truth keys.
-
-**Regenerate:**
-```bash
-python3 -c "from base_decryption.cipher_dataset_generator import create_cipher_dataset; create_cipher_dataset()"
-```
-
-### 2. Hash Dataset — `data/hash_dataset.csv`
-500 MD5 + 500 SHA-1 + 500 SHA-256 digests from SecLists sentences. Gitignored (regenerate locally).
-
-**Regenerate:**
-```bash
-python3 data/generate_hash_dataset.py
-```
-
-### 3. Kaggle Classification Dataset — `data/dataset.csv`
-220,000+ rows covering AES, DES, RSA, RC4, ChaCha20, MD5, SHA-*, and more.
-Download from: https://www.kaggle.com/datasets/chaitanya205/cryptographic-algorithm-classification-dataset  
-Place the downloaded CSV at `data/dataset.csv`.
-
----
-
-## Baseline Artifact Identifier
-
-The `baseline/artifact_identifier.py` module detects cryptographic artifact types using structural heuristics and information-theoretic features (Shannon entropy, printable-byte ratio, text readability). No keys or decryption are required.
-
-### Supported artifact types
-
-| Type | Algorithms detected |
-|------|-------------------|
-| **Hash** | MD5, SHA-1, SHA-224, SHA-256, SHA-384, SHA-512 |
-| **Encoding** | Base64, Base64-URL, Base32, Hex |
-| **Classical cipher** | Caesar, Single-byte XOR |
-| **Modern cipher (heuristic)** | AES, DES/3DES/Blowfish, RC4/stream, RSA |
-
-For a quick start:
-
-```python
-from baseline.artifact_identifier import ArtifactIdentifier
-
-ai = ArtifactIdentifier()
-
-# Hash detection
-r = ai.identify("d41d8cd98f00b204e9800998ecf8427e")
-# IdentificationResult(artifact_type='hash', algorithm='MD5', confidence=0.75)
-
-# Base64 encoding
-r = ai.identify("SGVsbG8gV29ybGQ=")
-# IdentificationResult(artifact_type='encoding', algorithm='Base64', confidence=0.78)
-
-# Caesar cipher
-r = ai.identify("Pdau zayezaz pk lhwjp wj knydwnz kb ykppkj ywjzu.")
-# IdentificationResult(artifact_type='cipher', algorithm='Caesar', confidence=0.70)
-
-# Batch mode
-results = ai.identify_batch(["48656c6c6f", "SGVsbG8=", "e3b0c44298fc..."])
-```
-
-For evaluation run with: `python3 baseline/evaluate_identifier.py` from the repo root.
-
----
-
-
-## Cryptanalysis Module
-
-See `base_decryption/base_decryption.py` and `test_baseline.py` for Caesar and single-byte XOR decryption using word-list scoring.
-
----
-
-## Setup
-
-```bash
-# No external dependencies required for baseline and cryptanalysis modules
-python3 --version   # Python 3.10+ recommended
-
-# Regenerate datasets
-python3 data/generate_hash_dataset.py
-python3 -c "from base_decryption.cipher_dataset_generator import create_cipher_dataset; create_cipher_dataset()"
-
-# Run cryptanalysis tests
-python3 test_baseline.py
-
-# Run artifact identifier evaluation (requires data/dataset.csv from Kaggle)
-python3 baseline/evaluate_identifier.py
-```
-
----
-
-## License
-
-Academic use. Datasets used under their respective licenses:
-- SecLists: MIT
-- Kaggle Cryptographic Algorithm Classification Dataset: CC BY-SA 4.0
-- neoneye/base64-decode-v2: MIT
