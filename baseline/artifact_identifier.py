@@ -3,12 +3,13 @@ Baseline Artifact Identifier
 Detects and classifies cryptographic artifacts using structural heuristics
 and information-theoretic features (no keys, no decryption attempted here).
 
+
 Supported artifact categories
 ──────────────────────────────
 Hash        : MD5, SHA-1, SHA-224, SHA-256, SHA-384, SHA-512
 Encoding    : Base64, Base64-URL, Base32, Hex (readable plaintext)
-Cipher/hex  : AES, DES, 3DES/Blowfish (8-byte block), RC4/stream
-              (heuristic by block-byte alignment and entropy)
+Cipher/hex  : AES, DES (8-byte block), RC4 (stream cipher)
+              (heuristic based on block-byte alignment and entropy)
 Cipher/b64  : RSA (long Base64, high byte entropy)
 Classical   : Caesar, SingleByteXOR
 """
