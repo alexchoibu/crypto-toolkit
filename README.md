@@ -58,37 +58,6 @@ crypto-toolkit-main/
 
 ---
 
-## Project Structure
-
-```
-crypto-toolkit/
-├── baseline/                        # Rule-based artifact identifier (Nare)
-│   ├── __init__.py
-│   ├── artifact_identifier.py       # ArtifactIdentifier class — main detector
-│   └── evaluate_identifier.py       # Evaluation against all three datasets
-│
-├── base_decryption/                 # Cryptanalysis module (Selman)
-│   ├── base_decryption.py           # Caesar and single-byte XOR decryption
-│   ├── cipher_dataset_generator.py  # Generates data/cipher_dataset.csv
-│   ├── sentences.txt                # Plaintext source (SecLists)
-│   ├── wordlist.txt                 # English wordlist for scoring
-│   └── 1-1000.txt                   # Top-1000 common English words
-│
-├── data/
-│   ├── generate_hash_dataset.py     # Script to regenerate hash_dataset.csv
-│   ├── cipher_dataset.csv           # Generated Caesar/XOR dataset
-│   ├── hash_dataset.csv             # Generated MD5/SHA-1/SHA-256 dataset (gitignored)
-│   └── dataset.csv                  # Kaggle classification dataset (gitignored)
-│
-├── llm/                             # LLM integration (Princessa) — coming soon
-├── evaluation/                      # Cross-module benchmarking (Emily) — coming soon
-│
-├── test_baseline.py                 # Quick smoke test for cryptanalysis module
-└── README.md
-```
-
----
-
 ## Datasets
 
 ### 1. Cipher Dataset — `data/cipher_dataset.csv`
