@@ -20,9 +20,6 @@ env/
 .DS_Store
 Thumbs.db
 
-# Large generated/downloaded data files — see README to regenerate
-data/dataset.csv
-data/hash_dataset.csv
 
 # Jupyter
 .ipynb_checkpoints/
