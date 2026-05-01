@@ -103,7 +103,7 @@ def detect_hash(artifact: str) -> Optional[IdentificationResult]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Hex-ciphertext detection  (AES / DES / 3DES / Blowfish / RC4 / ChaCha20 …)
+# Hex-ciphertext detection   
 # ─────────────────────────────────────────────────────────────────────────────
 
 def detect_hex_cipher(artifact: str) -> Optional[IdentificationResult]:
@@ -119,7 +119,7 @@ def detect_hex_cipher(artifact: str) -> Optional[IdentificationResult]:
     Algorithm guess from decoded byte count
     ----------------------------------------
     n % 16 == 0, n >= 16  →  AES (16-byte block) or Camellia/Serpent
-    n %  8 == 0, n >= 8   →  DES / 3DES / Blowfish (8-byte block)
+    n %  8 == 0, n >= 8   →  DES - like
     otherwise              →  RC4 / ChaCha20 / stream cipher
     """
     s = artifact.strip()
