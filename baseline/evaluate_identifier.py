@@ -1,17 +1,22 @@
 """
 evaluate_identifier.py
 ======================
-Evaluates ArtifactIdentifier against all three project datasets.
+Evaluates the baseline ArtifactIdentifier on selected subsets of the project datasets.
 
-Dataset A  data/hash_dataset.csv      Custom MD5/SHA-1/SHA-256 from SecLists
-Dataset B  data/dataset.csv           Kaggle Cryptographic Algorithm Classification
-Dataset C  data/cipher_dataset.csv    Project-generated Caesar / SingleByteXOR
+Dataset A  data/hash_dataset.csv      Programmatically generated hash dataset
+Dataset B  data/dataset.csv           Kaggle Cryptographic Algorithm Classification (hash and cipher subsets)
+Dataset C  data/cipher_dataset.csv    Project-generated classical cipher dataset (Caesar / SingleByteXOR)
+
+Note:
+The full project dataset collection includes additional encoding and encryption data.
+However, this evaluation focuses on finalized subsets relevant to structural artifact
+identification and ambiguity analysis.
 
 For each dataset we report:
   - Overall accuracy
   - Per-class precision, recall, F1, support
   - Confusion matrix
-  - Notes on any structural ambiguities in the data
+  - Notes on structural ambiguities and limitations
 """
 
 import csv
@@ -107,7 +112,7 @@ def print_report(title: str, pairs: list[tuple[str, str]], notes: str = ""):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Dataset A — Custom hash dataset  (data/hash_dataset.csv)
+# Dataset A 
 # ─────────────────────────────────────────────────────────────────────────────
 
 def evaluate_custom_hashes():
@@ -127,19 +132,17 @@ def evaluate_custom_hashes():
                 pairs.append((true_algo, pred.algorithm))
 
     print_report(
-        "Dataset A — Custom Hash Dataset  (MD5 / SHA-1 / SHA-256)",
+        "Dataset A",
         pairs,
         notes=(
-            "Hashes generated from SecLists sentences using hashlib.\n"
-            "13 MD5 misses are all-lowercase-hex with entropy just below 3.4\n"
-            "(near-repeat characters in the source text); reclassified as Unknown."
+            "Hashes generated programmatically using multiple hash algorithms."
         )
     )
     return pairs
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Dataset B — Kaggle dataset  (data/dataset.csv)
+# Dataset B 
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Hash sub-evaluation ──────────────────────────────────────────────────────
@@ -159,22 +162,7 @@ KAGGLE_HASH_ALGOS = {
     "GOST":     "SHA-256",
 }
 
-# ── Cipher sub-evaluation ────────────────────────────────────────────────────
-# The Kaggle cipher outputs come in two patterns:
-#   • 22-char hex  (11 bytes, stream/EC: AES subset, RC4, ChaCha20, ECC, ElGamal…)
-#   • 32-char hex  (16 bytes, block: DES, 3DES, Blowfish — same length as MD5 ✗)
-#   • Base64        (DES/3DES/Blowfish/AES when input was given, RSA always)
-#
-# KNOWN AMBIGUITY: 32-char hex DES/3DES/Blowfish output is structurally
-# identical to an MD5 digest. A heuristic identifier cannot distinguish them
-# without cryptanalytic context. We document this rather than ignore it.
-#
-# We evaluate two sub-groups:
-#   B-cipher-resolvable : ciphertexts the heuristic CAN classify (22-hex, Base64)
-#   B-cipher-ambiguous  : 32-hex ciphertexts that collide with MD5 length
-#
-# For the resolvable group we use a coarse label that our detector can
-# reasonably return:
+# Kaggle cipher outputs include both resolvable and structurally ambiguous cases.
 KAGGLE_CIPHER_COARSE = {
     # 22-hex stream / short block → our detector says RC4
     "AES":      "RC4",       # 11-byte AES ciphertext → stream-like, no block align
@@ -256,23 +244,23 @@ def evaluate_kaggle():
 
     # ── Print hash report ────────────────────────────────────────────────────
     print_report(
-        "Dataset B (Kaggle) — Hash Rows",
+        "Dataset B — Hash Rows",
         hash_pairs,
         notes=(
-            "SHA3-256 / BLAKE2b / GOST map to SHA-256 (same 64-char hex length).\n"
-            "SHA-256 recall ~44 %: half of SHA3-256/BLAKE2b/GOST rows were\n"
-            "assigned to SHA-256 as expected but counted against 2000 total."
+        "SHA3-256, BLAKE2b, and GOST are mapped to SHA-256 due to identical 64-character hex output.\n"
+        "As a result, many samples from these algorithms are classified as SHA-256, reducing\n"
+        "recall for the true SHA-256 class due to structural ambiguity."
         )
     )
 
     # ── Print resolvable cipher report ──────────────────────────────────────
     print_report(
-        "Dataset B (Kaggle) — Cipher Rows (Resolvable)",
+        "Dataset B — Cipher Rows",
         cipher_pairs,
         notes=(
-            "Includes AES/RC4/ChaCha20/ECC/ElGamal (22-hex), DES/3DES/Blowfish\n"
-            "(Base64 variant), and RSA (long Base64).\n"
-            "Coarse label: RC4 = any stream/short-block hex cipher."
+        "Includes AES/RC4/ChaCha20/ECC/ElGamal (22-char hex outputs), DES-like ciphers\n"
+        "(Base64 variant), and RSA (long Base64).\n"
+        "Coarse label: RC4 is used for stream-like or non-block-aligned hex ciphertext."
         )
     )
 
@@ -290,7 +278,7 @@ def evaluate_kaggle():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Dataset C — Classical cipher dataset  (data/cipher_dataset.csv)
+# Dataset C  
 # ─────────────────────────────────────────────────────────────────────────────
 
 def norm_classical(label: str) -> str:
@@ -322,13 +310,12 @@ def evaluate_classical():
             pairs.append((true_algo, pred.algorithm))
 
     print_report(
-        "Dataset C — Classical Cipher Dataset  (Caesar / SingleByteXOR)",
+        "Dataset C ",
         pairs,
         notes=(
-            f"{xor_len64} SingleByteXOR samples have 64-char hex output (= SHA-256\n"
-            f"length). These are the main source of XOR misclassification;\n"
-            f"the heuristic correctly identifies them as SHA-256/hash because\n"
-            f"both are structurally identical at that length."
+        f"{xor_len64} SingleByteXOR samples produce 64-character hex output, identical in length to SHA-256.\n"
+        "These samples are a primary source of misclassification, as the heuristic cannot distinguish\n"
+        "between XOR ciphertext and hash outputs with identical structural properties."
         )
     )
     return pairs
