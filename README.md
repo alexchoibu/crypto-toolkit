@@ -1,6 +1,50 @@
 # Automated Cryptanalysis and Cryptographic Algorithm Identification Toolkit
 
-A Python toolkit that automatically identifies and analyzes cryptographic artifacts — encrypted text, encoded data, and hash outputs — and compares rule-based heuristic detection against LLM-assisted analysis.
+Automating the identification of cryptographic artifacts can improve efficiency and reduce reliance on manual analysis. This project proposes the development of an automated toolkit capable of identifying common cryptographic artifacts, including classical ciphers, XOR-based encryption, encoding schemes, and hash outputs, while performing automated cryptanalysis where feasible. The project will also evaluate whether LLM-assisted analysis can improve performance compared to traditional heuristic and statistical approaches.
+
+```
+crypto-toolkit-main/
+│
+├── README.md
+├── .gitignore
+├── evaluation.py                    ← Evaluation & comparison script
+├── test_baseline.py                 ← Baseline test script
+│
+├── baseline/                        ← Rule-based artifact identifier
+│   ├── __init__.py
+│   ├── artifact_identifier.py       ← ArtifactIdentifier class - main detector
+│   └── evaluate_identifier.py       ← Evaluation against all three datasets
+│
+├── base_decryption/
+│   ├── __init__.py
+│   ├── base_decryption.py           ← Main decryption class (Caesar + XOR)
+│   ├── cipher_dataset_generator.py  ← Dataset generator (change INPUT_FILE to swap datasets)
+│   ├── sentences.txt                ← Simple English sentences (Kaggle)
+│   ├── harder_sentences.txt         ← High-quality sentences with proper nouns (HuggingFace)
+│   ├── wordlist.txt                 ← ~300k English words for scoring
+│   └── 1-1000.txt                   ← Top 1000 common words (weighted higher)
+│
+├── data/
+|   |── 0_9999_hashes.csv                   ← Generated umber list hash data
+|   |── 4-digits-0000-9999.txt              ← Number list containing strings 0000 to 9999
+│   |── cipher_dataset.csv                  ← Generated dataset (10k Caesar + XOR samples)
+|   |── create_data.py                      ← Dataset generation/accumulation script
+|   |── cryptography_dataset_enhanced.csv   ← First complex algorithm dataset from Kaggle
+|   |── cryptography_dataset_processed.csv  ← Second complex algorithm dataset from Kaggle
+|   |── data.csv                            ← Organized encoded dataset
+|   |── data.jsonl                          ← Encoded artifacts dataset from Hugging Face
+│   |── dataset.csv                         ← Complex algorithm dataset (AES, RSA, etc.)
+|   |── hashgen.py                          ← Hash generation script from SecLists
+│   ├── evaluation_results.csv              ← Output: row-by-row results from evaluation.py
+│   └── evaluation_chart.png                ← Output: visual comparison chart
+│
+└── llm/
+    ├── __init__.py
+    ├── llm_simple.py                ← LLM decryption for Caesar + XOR (Llama3.2)
+    ├── llm_complex.py               ← LLM identifier for 20+ algorithm types
+    ├── test_llm_simple.py           ← Test script for llm_simple
+    └── test_llm_complex.py          ← Test script for llm_complex
+
 
 ## Team
 
@@ -84,7 +128,7 @@ The `baseline/artifact_identifier.py` module detects cryptographic artifact type
 | **Classical cipher** | Caesar, Single-byte XOR |
 | **Modern cipher (heuristic)** | AES, DES/3DES/Blowfish, RC4/stream, RSA |
 
-### Quick start
+For a quick start:
 
 ```python
 from baseline.artifact_identifier import ArtifactIdentifier
@@ -107,43 +151,10 @@ r = ai.identify("Pdau zayezaz pk lhwjp wj knydwnz kb ykppkj ywjzu.")
 results = ai.identify_batch(["48656c6c6f", "SGVsbG8=", "e3b0c44298fc..."])
 ```
 
-### Detection logic
-
-Detectors run in priority order; the first result with confidence ≥ 0.88 short-circuits the pipeline:
-
-1. **RSA** — long Base64 (≥ 300 chars) with near-maximum decoded byte entropy
-2. **Hash** — exact hex digest length + Shannon entropy gate (rejects XOR ciphertexts of same length)
-3. **Base32** — restricted charset `[A-Z2-7=]` + valid decode
-4. **Caesar** — alpha/punctuation only, letter entropy in [3.5, 4.8], low English-word score
-5. **Hex encoding** — high printable ratio AND high word-readability in decoded bytes
-6. **Single-byte XOR** — even-length hex, high byte entropy, not pure-readable
-7. **Hex cipher** — block-aligned high-entropy hex (AES=16-byte blocks, DES=8-byte, RC4=other)
-8. **Base64** — standard/URL-safe, excludes pure-hex strings (sent to detectors above)
+For evaluation run with: `python3 baseline/evaluate_identifier.py` from the repo root.
 
 ---
 
-## Evaluation Results
-
-Run with: `python3 baseline/evaluate_identifier.py` from the repo root.
-
-| Dataset | Task | Accuracy |
-|---------|------|----------|
-| Custom hash dataset (A) | MD5 / SHA-1 / SHA-256 | **99.07%** |
-| Kaggle dataset (B) — hash rows | MD5 / SHA-1 / SHA-224 / SHA-256 / SHA-384 / SHA-512 | **75.2%** |
-| Kaggle dataset (B) — cipher rows (resolvable) | RSA, RC4-family | ~30% |
-| Classical cipher dataset (C) | Caesar / SingleByteXOR | **78.01%** |
-
-### Key findings
-
-**Hash identification is highly accurate** for common digest sizes. The 75.2% on the Kaggle hash dataset reflects a known dataset ambiguity: SHA3-256, BLAKE2b, and GOST all produce 64-char hex digests that are structurally identical to SHA-256. When these are excluded, accuracy exceeds 98%.
-
-**Classical cipher identification** achieves 78% overall, with Caesar at 89% recall. The primary failure mode for single-byte XOR is the 64-char hex collision with SHA-256: short XOR ciphertexts of exactly 32 bytes are indistinguishable from MD5 digests (32-char hex) and SHA-256 (64-char hex) without decryption.
-
-**Modern cipher heuristics** are limited by the Kaggle dataset's fixed 11-byte ciphertexts (22 hex chars), which are too short for reliable block-size fingerprinting and are near-identical across AES, RC4, ChaCha20, ECC, and ElGamal. This is a fundamental limitation of pure structural analysis and motivates the LLM-assisted module.
-
-**Known fundamental ambiguity:** Any 32-char hex string can be either an MD5 digest or a DES/Blowfish ciphertext; any 64-char hex string can be either SHA-256 or short XOR/AES ciphertext. Heuristics cannot resolve this without additional context — this is where LLM analysis adds value.
-
----
 
 ## Cryptanalysis Module
 
